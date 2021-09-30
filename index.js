@@ -1,5 +1,5 @@
 const {compress} = require('brotli-wasm');
-const {readFileSync} = require('fs');
+const fs = require('fs');
 
 const name = 'brotli'
 
@@ -13,7 +13,7 @@ const setup = ({onResolve, onLoad}) => {
 
 const brotliCompress = async ({path}) => {
     const originalPath = path.replace("?br", "");
-    const rawBuffer = readFileSync(originalPath);
+    const rawBuffer = await fs.promises.readFile(originalPath);
     const compressedBytes = compress(new Uint8Array(rawBuffer));
     return {contents: compressedBytes, loader: "binary"};
 }
