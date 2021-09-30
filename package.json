@@ -1,6 +1,6 @@
 {
   "name": "esbuild-plugin-brotli",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "esbuild plugin brotli compress",
   "main": "index.js",
   "scripts": {
