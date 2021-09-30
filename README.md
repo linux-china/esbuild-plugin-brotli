@@ -1,6 +1,8 @@
 esbuild-brotli-plugin for Node.js
 ==================================
 
+![npm version](https://img.shields.io/npm/v/esbuild-plugin-brotli)
+
 An esbuild plugin to compress asset files with brotli.
 
 # How to use?
