@@ -1,5 +1,6 @@
 const {compress} = require('brotli-wasm');
 const fs = require('fs');
+const FileHound = require('filehound');
 
 const name = 'brotli'
 
@@ -14,10 +15,30 @@ const setup = ({onResolve, onLoad}) => {
 
 const brotliCompress = async ({path, pluginData}) => {
     const resolveDir = pluginData.resolveDir;
-    const originalPath = resolveDir + "/" + path.replace("?br", "");
-    const rawBuffer = await fs.promises.readFile(originalPath);
-    const compressedBytes = compress(new Uint8Array(rawBuffer));
-    return {contents: compressedBytes, loader: "binary"};
+    const originalPath = resolveDir + "/" + path.replace("?br", "").replace("./", "");
+    let stats = fs.lstatSync(originalPath);
+    if (stats.isFile()) {// compress one file
+        const rawBuffer = await fs.promises.readFile(originalPath);
+        const compressedBytes = compress(new Uint8Array(rawBuffer));
+        return {contents: compressedBytes, loader: "binary"};
+    } else if (stats.isDirectory()) { // compress all files in directory
+        const compressedFiles = [];
+        const files = await FileHound.create().paths(originalPath)
+            .discard(/node_modules/)
+            .ignoreHiddenFiles()
+            .ignoreHiddenDirectories()
+            .find();
+        const offset = originalPath.endsWith("/") ? originalPath.length - 1 : originalPath.length
+        for (const file of files) {
+            const relativeFilePath = file.substring(offset);
+            const rawBuffer = await fs.promises.readFile(file);
+            const compressedBytes = compress(new Uint8Array(rawBuffer));
+            const base64Text = Buffer.from(compressedBytes).toString("base64");
+            compressedFiles.push(`"${relativeFilePath}": __toBinary2('${base64Text}')`);
+        }
+        const binaryFunction = `const __toBinary2=(()=>{for(var r=new Uint8Array(128),a=0;a<64;a++)r[a<26?a+65:a<52?a+71:a<62?a-4:4*a-205]=a;return a=>{for(var t=a.length,e=new Uint8Array(3*(t-("="==a[t-1])-("="==a[t-2]))/4|0),n=0,o=0;n<t;){var A=r[a.charCodeAt(n++)],h=r[a.charCodeAt(n++)],c=r[a.charCodeAt(n++)],d=r[a.charCodeAt(n++)];e[o++]=A<<2|h>>4,e[o++]=h<<4|c>>2,e[o++]=c<<6|d}return e}})();`;
+        return {contents: binaryFunction + ` export default { ${compressedFiles.join(",")} } `};
+    }
 }
 
 module.exports = {name, setup};
