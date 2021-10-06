@@ -4,7 +4,7 @@
   "description": "esbuild plugin brotli compress",
   "main": "index.js",
   "scripts": {
-    "test": "cd test; node build.js"
+    "test": "cd test; node build.js; node bundle.js"
   },
   "keywords": [
     "esbuild",
@@ -15,6 +15,8 @@
   "license": "ISC",
   "dependencies": {
     "esbuild": "^0.13.3",
-    "brotli-wasm": "^1.1.0"
+    "brotli-wasm": "^1.1.0",
+    "filehound": "^1.17.5",
+    "upath": "^2.0.1"
   }
 }
